@@ -6546,7 +6546,9 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
          *  This represents the ``x`` coordinate of a "reference" or
          *  challenge point, from which the ``y`` can be computed.
          */
-        get r() { return this.#r; }
+        get r() {
+            return this.#r;
+        }
         set r(value) {
             assertArgument(dataLength(value) === 32, "invalid r", "value", value);
             this.#r = hexlify(value);
@@ -6554,7 +6556,9 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
         /**
          *  The ``s`` value for a signature.
          */
-        get s() { return this.#s; }
+        get s() {
+            return this.#s;
+        }
         set s(_value) {
             assertArgument(dataLength(_value) === 32, "invalid s", "value", _value);
             const value = hexlify(_value);
@@ -6571,7 +6575,9 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
          *  It is normalized to the values ``27`` or ``28`` for legacy
          *  purposes.
          */
-        get v() { return this.#v; }
+        get v() {
+            return this.#v;
+        }
         set v(value) {
             const v = getNumber(value, "value");
             assertArgument(v === 27 || v === 28, "invalid v", "v", value);
@@ -6581,7 +6587,9 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
          *  The EIP-155 ``v`` for legacy transactions. For non-legacy
          *  transactions, this value is ``null``.
          */
-        get networkV() { return this.#networkV; }
+        get networkV() {
+            return this.#networkV;
+        }
         /**
          *  The chain ID for EIP-155 legacy transactions. For non-legacy
          *  transactions, this value is ``null``.
@@ -6599,7 +6607,7 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
          *  See ``v`` for more details on how this value is used.
          */
         get yParity() {
-            return (this.v === 27) ? 0 : 1;
+            return this.v === 27 ? 0 : 1;
         }
         /**
          *  The [[link-eip-2098]] compact representation of the ``yParity``
@@ -6623,7 +6631,7 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
          *  The serialized representation.
          */
         get serialized() {
-            return concat([this.r, this.s, (this.yParity ? "0x1c" : "0x1b")]);
+            return concat([this.r, this.s, this.yParity ? "0x1c" : "0x1b"]);
         }
         /**
          *  @private
@@ -6635,7 +6643,7 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
             this.#v = v;
             this.#networkV = null;
         }
-        [Symbol.for('nodejs.util.inspect.custom')]() {
+        [Symbol.for("nodejs.util.inspect.custom")]() {
             return `Signature { r: "${this.r}", s: "${this.s}", yParity: ${this.yParity}, networkV: ${this.networkV} }`;
         }
         /**
@@ -6655,8 +6663,10 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
             const networkV = this.networkV;
             return {
                 _type: "signature",
-                networkV: ((networkV != null) ? networkV.toString() : null),
-                r: this.r, s: this.s, v: this.v,
+                networkV: networkV != null ? networkV.toString() : null,
+                r: this.r,
+                s: this.s,
+                v: this.v,
             };
         }
         /**
@@ -6672,7 +6682,7 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
         static getChainId(v) {
             const bv = getBigInt(v, "v");
             // The v is not an EIP-155 v, so it is the unspecified chain ID
-            if ((bv == BN_27$1) || (bv == BN_28$1)) {
+            if (bv == BN_27$1 || bv == BN_28$1) {
                 return BN_0$7;
             }
             // Bad value for an EIP-155 v
@@ -6694,7 +6704,7 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
          *
          */
         static getChainIdV(chainId, v) {
-            return (getBigInt(chainId) * BN_2$3) + BigInt(35 + v - 27);
+            return getBigInt(chainId) * BN_2$3 + BigInt(35 + v - 27);
         }
         /**
          *  Compute the normalized legacy transaction ``v`` from a ``yParirty``,
@@ -6727,7 +6737,7 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
             }
             assertArgument(bv >= BN_35$1, "invalid v", "v", v);
             // Otherwise, EIP-155 v means odd is 27 and even is 28
-            return (bv & BN_1$3) ? 27 : 28;
+            return bv & BN_1$3 ? 27 : 28;
         }
         /**
          *  Creates a new [[Signature]].
@@ -6744,12 +6754,12 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
             if (sig == null) {
                 return new Signature(_guard$3, ZeroHash, ZeroHash, 27);
             }
-            if (typeof (sig) === "string") {
+            if (typeof sig === "string") {
                 const bytes = getBytes(sig, "signature");
                 if (bytes.length === 64) {
                     const r = hexlify(bytes.slice(0, 32));
                     const s = bytes.slice(32, 64);
-                    const v = (s[0] & 0x80) ? 28 : 27;
+                    const v = s[0] & 0x80 ? 28 : 27;
                     s[0] &= 0x7f;
                     return new Signature(_guard$3, r, hexlify(s), v);
                 }
@@ -6783,23 +6793,28 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
                 assertError(false, "missing s");
             })(sig.s, sig.yParityAndS);
             assertError((getBytes(s)[0] & 0x80) == 0, "non-canonical s");
+            if (Boolean(sig.v)) {
+                sig.v = "0x0";
+            }
             // Get v; by any means necessary (we check consistency below)
             const { networkV, v } = (function (_v, yParityAndS, yParity) {
                 if (_v != null) {
                     const v = getBigInt(_v);
                     return {
-                        networkV: ((v >= BN_35$1) ? v : undefined),
-                        v: Signature.getNormalizedV(v)
+                        networkV: v >= BN_35$1 ? v : undefined,
+                        v: Signature.getNormalizedV(v),
                     };
                 }
                 if (yParityAndS != null) {
                     assertError(isHexString(yParityAndS, 32), "invalid yParityAndS");
-                    return { v: ((getBytes(yParityAndS)[0] & 0x80) ? 28 : 27) };
+                    return { v: getBytes(yParityAndS)[0] & 0x80 ? 28 : 27 };
                 }
                 if (yParity != null) {
                     switch (getNumber(yParity, "sig.yParity")) {
-                        case 0: return { v: 27 };
-                        case 1: return { v: 28 };
+                        case 0:
+                            return { v: 27 };
+                        case 1:
+                            return { v: 28 };
                     }
                     assertError(false, "invalid yParity");
                 }
@@ -6810,7 +6825,8 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
                 result.#networkV = networkV;
             }
             // If multiple of v, yParity, yParityAndS we given, check they match
-            assertError(sig.yParity == null || getNumber(sig.yParity, "sig.yParity") === result.yParity, "yParity mismatch");
+            assertError(sig.yParity == null ||
+                getNumber(sig.yParity, "sig.yParity") === result.yParity, "yParity mismatch");
             assertError(sig.yParityAndS == null || sig.yParityAndS === result.yParityAndS, "yParityAndS mismatch");
             return result;
         }
